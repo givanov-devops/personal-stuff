@@ -42,6 +42,11 @@ jobs:
         run: |
           PYTHONPATH=. pytest tests/ --cov=app --cov-report=term-missing --verbose
 
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
       - name: Validate Infrastructure Code
         run: |
           terraform fmt -check -recursive
