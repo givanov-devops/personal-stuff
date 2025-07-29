@@ -65,11 +65,6 @@ variable "container_memory_swap" {
   description = "Memory swap limit for application containers (MB)"
   type        = number
   default     = 512
-
-  validation {
-    condition     = var.container_memory_swap >= var.container_memory
-    error_message = "Memory swap must be greater than or equal to memory limit."
-  }
 }
 
 variable "gunicorn_workers" {
@@ -189,11 +184,6 @@ variable "rate_limit_burst" {
   description = "Rate limit burst size"
   type        = number
   default     = 20
-
-  validation {
-    condition     = var.rate_limit_burst >= var.rate_limit_requests
-    error_message = "Rate limit burst must be greater than or equal to rate limit requests."
-  }
 }
 
 # Build Configuration
