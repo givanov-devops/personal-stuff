@@ -4,10 +4,11 @@ Simple Flask web application.
 Provides /api/ping endpoint that returns JSON with message and hostname.
 """
 
+import logging
 import os
 import socket
+
 from flask import Flask, jsonify
-import logging
 
 # Configure logging
 logging.basicConfig(
