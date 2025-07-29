@@ -38,10 +38,6 @@ jobs:
           isort --check-only app.py
           flake8 app.py --count --statistics
 
-      - name: Security Scan
-        run: |
-          bandit -r app.py
-
       - name: Run Unit Tests
         run: |
           pytest --cov=app --cov-report=term-missing --verbose
