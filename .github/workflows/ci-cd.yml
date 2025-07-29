@@ -1,0 +1,129 @@
+name: Ping Application CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/ping-app
+  TERRAFORM_VERSION: 1.5.0
+
+jobs:
+  # Continuous Integration
+  ci:
+    name: Build, Test & Validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov flake8 black isort bandit
+
+      - name: Code Quality Checks
+        run: |
+          black --check app.py test_app.py
+          isort --check-only app.py test_app.py
+          flake8 app.py test_app.py --count --statistics
+
+      - name: Security Scan
+        run: |
+          bandit -r app.py
+
+      - name: Run Unit Tests
+        run: |
+          pytest --cov=app --cov-report=term-missing --verbose
+
+      - name: Validate Infrastructure Code
+        run: |
+          terraform fmt -check -recursive
+          terraform init -backend=false
+          terraform validate
+
+  # Continuous Deployment
+  cd:
+    name: Deploy Infrastructure & Application
+    runs-on: ubuntu-latest
+    needs: ci
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Configure Docker for Terraform
+        run: |
+          sudo systemctl start docker
+          sudo usermod -aG docker $USER
+
+      - name: Deploy Infrastructure
+        run: |
+          terraform init
+          terraform plan -out=tfplan
+          terraform apply -auto-approve tfplan
+
+      - name: Wait for Services
+        run: sleep 30
+
+      - name: Integration Testing
+        run: |
+          # Test load balancer endpoints
+          curl -k https://localhost:8080/health
+          curl -k https://localhost:8080/api/ping
+
+      - name: Deployment Summary
+        run: |
+          echo "🚀 Deployment Summary:"
+          terraform output deployment_summary
+
+  load-test:
+    name: Load Test API
+    runs-on: ubuntu-latest
+    needs: cd  # Wait for the cd job to finish
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install requests
+        run: pip install requests
+
+      - name: Wait for service to be ready
+        run: |
+          echo "Waiting for app to be ready..."
+          sleep 30  # Adjust if needed
+
+      - name: Run load test script
+        run: python scripts/load_test.py
+
+  # Cleanup on PR close
+  cleanup:
+    name: Cleanup Resources
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+
+    steps:
+      - name: Cleanup PR Resources
+        run: |
+          echo "Cleaning up PR resources..."
