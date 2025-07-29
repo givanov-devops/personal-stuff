@@ -5,7 +5,7 @@ import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-URL = "https://localhost:8080/nginx-health"
+URL = "https://localhost:8080/health"
 
 hostnames = []
 

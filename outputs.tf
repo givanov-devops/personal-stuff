@@ -9,7 +9,7 @@ output "load_balancer_url" {
 
 output "load_balancer_health_url" {
   description = "Load balancer health check URL"
-  value       = var.enable_tls ? "https://localhost:${var.lb_port}/nginx-health" : "http://localhost:${var.lb_port}/nginx-health"
+  value       = var.enable_tls ? "https://localhost:${var.lb_port}/health" : "http://localhost:${var.lb_port}/health"
 }
 
 output "application_info" {
