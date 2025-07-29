@@ -40,7 +40,7 @@ jobs:
 
       - name: Run Unit Tests
         run: |
-          pytest --cov=app --cov-report=term-missing --verbose
+          pytest tests/ --cov=app --cov-report=term-missing --verbose
 
       - name: Validate Infrastructure Code
         run: |
