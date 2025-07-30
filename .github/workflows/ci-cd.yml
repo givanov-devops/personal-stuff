@@ -100,6 +100,19 @@ jobs:
           terraform fmt -check -recursive
           terraform init -backend=false
           terraform validate
+
+      - name: Generate Terraform Plan
+        run: |
+          echo "📋 Generating Terraform plan..."
+          terraform init
+          terraform plan -out=tfplan
+            
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan
+          path: tfplan
+          retention-days: 1
   
    # Manual Approval for the terraform apply infrastructure step
   approval:
@@ -157,7 +170,7 @@ jobs:
       - name: Deploy Infrastructure
         run: |
           terraform init
-          terraform plan -out=tfplan
+          echo "🚀 Applying Terraform changes..."
           terraform apply -auto-approve tfplan
 
       - name: Wait for Services
