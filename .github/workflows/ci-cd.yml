@@ -9,7 +9,7 @@ on:
 env:
   DOCKER_REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}/ping-app
-  TERRAFORM_VERSION: 1.5.0
+  TERRAFORM_VERSION: 1.9.8
   TARGET_ENV: local
 
 jobs:
