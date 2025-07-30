@@ -104,7 +104,7 @@ jobs:
       - name: Generate Terraform Plan
         run: |
           echo "📋 Generating Terraform plan..."
-          terraform init
+          terraform init -backend=false
           terraform plan -out=tfplan
           terraform show -no-color tfplan > tfplan.txt
             
