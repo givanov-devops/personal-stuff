@@ -356,6 +356,71 @@ Our CI/CD pipeline implements a secure, multi-stage deployment process with the 
 - ✅ **Transparency**: Full Terraform plan visible during approval
 - ✅ **Auditability**: Complete history of approvals and deployments
 
+## 🚀 Load Testing script usage examples:
+
+```
+python load_test.py
+```
+
+# Custom number of requests
+
+```
+python load_test.py --requests 200
+```
+
+# Custom URL and requests
+
+```
+python load_test.py --url https://localhost:8443/api/ping --requests 150
+```
+
+# With timeout setting
+
+```
+python load_test.py --requests 100 --timeout 15
+📊 Sample Output:
+🚀 Starting load test...
+Target URL: https://localhost:8080/api/ping
+Total Requests: 100
+
+
+---
+
+Progress: 10/100 requests...
+Progress: 20/100 requests...
+...
+✅ Load test completed!
+
+============================================================
+ALCATRAZ AI LOAD TEST RESULTS
+============================================================
+Total Requests: 100
+Successful Requests: 100
+Failed Requests: 0
+Success Rate: 100.0%
+
+## 📋 LIST OF NODE HOSTNAMES:
+
+Node Hostnames: 09dd8dd1d425, 3326e86ad54f, a346185cf877
+
+## 🔢 COUNT OF AVAILABLE NODES:
+
+Available Nodes: 3
+
+## 📊 REQUESTS HANDLED BY EACH NODE:
+
+09dd8dd1d425: 34 requests (34.0%)
+3326e86ad54f: 33 requests (33.0%)
+a346185cf877: 33 requests (33.0%)
+
+============================================================
+✅ ALCATRAZ AI REQUIREMENTS COMPLETED:
+✓ List of node hostnames
+✓ Number of requests handled by each node
+✓ Count of available nodes
+============================================================
+```
+
 <!-- BEGIN_TF_DOCS -->
 
 ## Requirements
