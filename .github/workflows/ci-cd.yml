@@ -276,6 +276,8 @@ jobs:
           terraform init -backend=false
           echo "🚀 Applying Terraform changes..."
           terraform apply -auto-approve tfplan
+      - name: Cleanup tfplan files
+        run: rm -f tfplan*
 
       - name: Wait for Services
         run: sleep 30
