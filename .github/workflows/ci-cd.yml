@@ -2,9 +2,9 @@ name: Ping Application CI/CD Pipeline
 
 on:
   push:
-    branches: [ '**' ]  # Trigger on push to any branch
+    branches: ["**"] # Trigger on push to any branch
   pull_request:
-    branches: [ main ]   # Trigger on PR to main
+    branches: [main] # Trigger on PR to main
 
 env:
   DOCKER_REGISTRY: ghcr.io
@@ -50,7 +50,8 @@ jobs:
           echo "✅ Code quality checks completed successfully!"
           echo "Branch: ${{ github.ref_name }}"
           echo "Event: ${{ github.event_name }}"
-    # Code Quality Checking and Terraform Validating (runs only on PR to main or push to main)
+
+  # Code Quality Checking and Terraform Validating (runs only on PR to main or push to main)
   ci:
     name: Code Quality Checking and Terraform Validating
     runs-on: ubuntu-latest
@@ -60,12 +61,12 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-      
+
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
-      
+
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
@@ -78,12 +79,12 @@ jobs:
           black --check app.py
           isort --check-only app.py
           flake8 app.py --count --statistics
-  
+
       - name: Run Unit Tests
         run: |
           echo "🧪 Running unit tests..."
           PYTHONPATH=. pytest tests/ --cov=app --cov-report=term-missing --verbose
-  
+
       - name: Code Quality Summary
         run: |
           echo "✅ Code quality checks completed successfully!"
@@ -107,17 +108,17 @@ jobs:
           terraform init -backend=false
           terraform plan -out=tfplan
           terraform show -no-color tfplan > tfplan.txt
-            
+
       - name: Upload Terraform Plan
         uses: actions/upload-artifact@v4
         with:
           name: terraform-plan
-          path: | 
+          path: |
             tfplan
             tfplan.txt
           retention-days: 1
-  
-   # Manual Approval for the terraform apply infrastructure step
+
+  # Manual Approval for the terraform apply infrastructure step
   approval:
     name: Manual Approval for Infrastructure Deployment
     runs-on: ubuntu-latest
@@ -126,82 +127,123 @@ jobs:
     permissions:
       issues: write
 
-  steps:
-    - name: Download Terraform Plan
-      uses: actions/download-artifact@v4
-      with:
-        name: terraform-plan
-        path: .
+    steps:
+      - name: Download Terraform Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan
+          path: .
 
-    - name: Read Terraform Plan
-      id: plan
-      run: |
-        # Read the plan file and prepare it for GitHub issue
-        if [ -f tfplan.txt ]; then
-          # Escape special characters and prepare for multiline
-          PLAN_CONTENT=$(cat tfplan.txt)
-          # GitHub has a limit on issue body size, so truncate if too long
-          if [ ${#PLAN_CONTENT} -gt 60000 ]; then
-            PLAN_CONTENT="${PLAN_CONTENT:0:60000}... [TRUNCATED - Full plan available in artifacts]"
+      - name: Process Terraform Plan
+        id: plan
+        run: |
+          if [ -f tfplan.txt ]; then
+            # Extract key information from the plan
+            PLAN_CONTENT=$(cat tfplan.txt)
+            
+            # Extract resources to be created/modified/destroyed
+            TO_ADD=$(echo "$PLAN_CONTENT" | grep "will be created" | wc -l)
+            TO_CHANGE=$(echo "$PLAN_CONTENT" | grep "will be updated" | wc -l)
+            TO_DESTROY=$(echo "$PLAN_CONTENT" | grep "will be destroyed" | wc -l)
+            
+            # Prepare short summary
+            SUMMARY="📊 **Changes Summary:**
+            - 🟢 Resources to create: $TO_ADD
+            - 🟡 Resources to modify: $TO_CHANGE  
+            - 🔴 Resources to destroy: $TO_DESTROY"
+            
+            # Get first 50 lines of plan for preview
+            PLAN_PREVIEW=$(echo "$PLAN_CONTENT" | head -50)
+            
+            # Save outputs
+            {
+              echo "CHANGES_SUMMARY<<EOF"
+              echo "$SUMMARY"
+              echo "EOF"
+            } >> $GITHUB_OUTPUT
+            
+            {
+              echo "PLAN_PREVIEW<<EOF"
+              echo "$PLAN_PREVIEW"
+              echo "EOF"
+            } >> $GITHUB_OUTPUT
+            
+            # Full plan (truncated if too long)
+            if [ ${#PLAN_CONTENT} -gt 50000 ]; then
+              PLAN_CONTENT="${PLAN_CONTENT:0:50000}... 
+
+            [TRUNCATED - View full plan in artifacts]"
+            fi
+            
+            {
+              echo "FULL_PLAN<<EOF"
+              echo "$PLAN_CONTENT"
+              echo "EOF"
+            } >> $GITHUB_OUTPUT
+          else
+            echo "CHANGES_SUMMARY=❌ Plan file not found" >> $GITHUB_OUTPUT
+            echo "PLAN_PREVIEW=Plan file not available" >> $GITHUB_OUTPUT
+            echo "FULL_PLAN=Plan file not available" >> $GITHUB_OUTPUT
           fi
-          # Save to output using heredoc to handle multiline content
-          {
-            echo "TERRAFORM_PLAN<<EOF"
-            echo "$PLAN_CONTENT"
-            echo "EOF"
-          } >> $GITHUB_OUTPUT
-        else
-          echo "TERRAFORM_PLAN=Plan file not found" >> $GITHUB_OUTPUT
-        fi
 
-    - name: Manual Approval Required
-      uses: trstringer/manual-approval@v1
-      with:
-        secret: ${{ github.TOKEN }}
-        approvers: ${{ github.actor }}  # Replace with your GitHub username or Team
-        minimum-approvals: 1
-        issue-title: "🚀 Terraform Infrastructure Deployment Approval Required"
-        issue-body: |
-          **Branch:** ${{ github.ref_name }}
-          **Commit:** ${{ github.sha }}
-          **Workflow:** ${{ github.workflow }}
-          **Triggered by:** ${{ github.actor }}
-          **Run ID:** ${{ github.run_id }}
-          
-          ---
-          
-          ## 📋 Terraform Plan Preview
-          
-          This deployment will apply the following Terraform changes to the production infrastructure:
-          
-          <details>
-          <summary>🔍 Click to view Terraform Plan</summary>
-          
-          ```terraform
-          ${{ steps.plan.outputs.TERRAFORM_PLAN }}
-          ```
-          
-          </details>
-          
-          ---
-          
-          ## 🚀 Approval Instructions
-          
-          Please **carefully review** the Terraform plan above and respond with:
-          - **approve** or **lgtm** or **yes** to proceed with deployment
-          - **deny** or **no** to cancel the deployment
-          
-          **⚠️ Warning:** This will make changes to production infrastructure!
-          
-          ---
-          
-          📎 **Additional Resources:**
-          - [View full artifacts](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-          - [View workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-          - [View commit](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
-        exclude-workflow-initiator-as-approver: false
-        fail-on-dialog: true
+      - name: Manual Approval Required
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ github.TOKEN }}
+          approvers: ${{ github.actor }} # Replace with your GitHub username or Team
+          minimum-approvals: 1
+          issue-title: "🚀 Terraform Infrastructure Deployment Approval Required"
+          issue-body: |
+            **Branch:** ${{ github.ref_name }}
+            **Commit:** ${{ github.sha }}
+            **Workflow:** ${{ github.workflow }}
+            **Triggered by:** ${{ github.actor }}
+            **Run ID:** ${{ github.run_id }}
 
+            ---
+
+            ${{ steps.plan.outputs.CHANGES_SUMMARY }}
+
+            ---
+
+            ## 📋 Terraform Plan Preview
+
+            <details>
+            <summary>🔍 Click to view Plan Preview (first 50 lines)</summary>
+
+            ```terraform
+            ${{ steps.plan.outputs.PLAN_PREVIEW }}
+            ```
+
+            </details>
+
+            <details>
+            <summary>📄 Click to view Full Terraform Plan</summary>
+
+            ```terraform
+            ${{ steps.plan.outputs.FULL_PLAN }}
+            ```
+
+            </details>
+
+            ---
+
+            ## 🚀 Approval Instructions
+
+            Please **carefully review** the changes above and respond with:
+            - **approve** or **lgtm** or **yes** ✅ to proceed with deployment
+            - **deny** or **no** ❌ to cancel the deployment
+
+            **⚠️ Warning:** This will make changes to production infrastructure!
+
+            ---
+
+            📎 **Additional Resources:**
+            - [📦 View Artifacts](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - [🔄 View Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - [📝 View Commit](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
+          exclude-workflow-initiator-as-approver: false
+          fail-on-denial: true
 
   # Continuous Deployment
   cd:
