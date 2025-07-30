@@ -337,7 +337,7 @@ This project is created for educational/interview purposes.
 
 ## 🏗️ CI/CD Architecture
 
-![CI/CD Pipeline Architecture](docs/cicd-architecture.png)
+![CI/CD Pipeline Architecture](docs/cicd-architecture.svg)
 
 ### Pipeline Overview
 
