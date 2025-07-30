@@ -106,7 +106,7 @@ jobs:
     name: Manual Approval for Infrastructure Deployment
     runs-on: ubuntu-latest
     needs: ci
-    if: success()
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     permissions:
       issues: write
 
@@ -115,7 +115,7 @@ jobs:
         uses: trstringer/manual-approval@v1
         with:
           secret: ${{ github.TOKEN }}  # Use ${{ steps.generate_token.outputs.token }} for org teams
-          approvers: ${{ github.actor }}  # Replace with your GitHub username or team
+          approvers: ${{ github.actor }}  # Replace with your GitHub username or Team
           minimum-approvals: 1
           issue-title: "🚀 Terraform Infrastructure Deployment Approval Required"
           issue-body: |
