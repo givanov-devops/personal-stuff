@@ -327,7 +327,7 @@ Health check endpoint.
 
 This project is created for educational/interview purposes.
 
-🔄 CI/CD Pipeline Architecture
+## 🔄 CI/CD Pipeline Architecture
 Pipeline Flow:
 Code Commit → CI (Build & Test) → CD (Deploy) → Monitor
 Tool Selection: GitHub Actions
