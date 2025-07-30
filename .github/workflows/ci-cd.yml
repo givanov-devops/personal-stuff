@@ -169,8 +169,11 @@ jobs:
           sudo usermod -aG docker $USER
 
       - name: Deploy Infrastructure
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan
+      - shell: bash
         run: |
-          terraform init
           echo "🚀 Applying Terraform changes..."
           terraform apply -auto-approve tfplan
 
