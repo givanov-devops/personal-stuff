@@ -23,7 +23,6 @@ Internet → Load Balancer (Nginx) → Application Nodes (Flask)
 ├── outputs.tf             # Terraform outputs
 ├── nginx.conf.tpl         # Nginx configuration template
 ├── load_test.py           # Load testing script
-├── Makefile              # Automation commands
 ├── .github/workflows/    # CI/CD pipeline
 └── README.md             # This file
 ```
@@ -35,7 +34,6 @@ Internet → Load Balancer (Nginx) → Application Nodes (Flask)
 - Docker and Docker Compose
 - Terraform >= 1.0
 - Python 3.11+
-- Make (optional, for convenience)
 
 ### 1. Local Development
 
@@ -73,7 +71,7 @@ terraform plan
 terraform apply
 
 # Test load balancer (TLS Enabled - it can be managed via the enable_tls toggle - set to true by default in variables.tf)
-curl https://localhost:8080/api/ping
+curl -k https://localhost:8080/api/ping
 
 ## 🔧 Configuration Options
 
@@ -135,7 +133,7 @@ When `enable_tls=true`:
 
 ```bash
 # Load balancer health
-curl https://localhost:8080/health
+curl -k https://localhost:8080/health
 
 # Application health
 curl http://localhost:5000/health
@@ -422,21 +420,20 @@ a346185cf877: 33 requests (33.0%)
 ```
 
 <!-- BEGIN_TF_DOCS -->
-
 ## Requirements
 
-| Name                                                                     | Version |
-| ------------------------------------------------------------------------ | ------- |
-| <a name="requirement_terraform"></a> [terraform](#requirement_terraform) | >= 1.0  |
-| <a name="requirement_docker"></a> [docker](#requirement_docker)          | ~> 3.0  |
-| <a name="requirement_tls"></a> [tls](#requirement_tls)                   | ~> 4.0  |
+| Name | Version |
+|------|---------|
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
+| <a name="requirement_docker"></a> [docker](#requirement\_docker) | ~> 3.0 |
+| <a name="requirement_tls"></a> [tls](#requirement\_tls) | ~> 4.0 |
 
 ## Providers
 
-| Name                                                      | Version |
-| --------------------------------------------------------- | ------- |
-| <a name="provider_docker"></a> [docker](#provider_docker) | 3.6.2   |
-| <a name="provider_tls"></a> [tls](#provider_tls)          | 4.1.0   |
+| Name | Version |
+|------|---------|
+| <a name="provider_docker"></a> [docker](#provider\_docker) | 3.6.2 |
+| <a name="provider_tls"></a> [tls](#provider\_tls) | 4.1.0 |
 
 ## Modules
 
@@ -444,60 +441,59 @@ No modules.
 
 ## Resources
 
-| Name                                                                                                                             | Type     |
-| -------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| [docker_container.app_nodes](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/container)         | resource |
-| [docker_container.load_balancer](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/container)     | resource |
-| [docker_image.nginx](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/image)                     | resource |
-| [docker_image.ping_app](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/image)                  | resource |
-| [docker_network.app_network](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/network)           | resource |
-| [tls_private_key.internal_ca](https://registry.terraform.io/providers/hashicorp/tls/latest/docs/resources/private_key)           | resource |
+| Name | Type |
+|------|------|
+| [docker_container.app_nodes](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/container) | resource |
+| [docker_container.load_balancer](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/container) | resource |
+| [docker_image.nginx](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/image) | resource |
+| [docker_image.ping_app](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/image) | resource |
+| [docker_network.app_network](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/network) | resource |
+| [tls_private_key.internal_ca](https://registry.terraform.io/providers/hashicorp/tls/latest/docs/resources/private_key) | resource |
 | [tls_self_signed_cert.internal_ca](https://registry.terraform.io/providers/hashicorp/tls/latest/docs/resources/self_signed_cert) | resource |
 
 ## Inputs
 
-| Name                                                                                                         | Description                                             | Type           | Default                                                                                                           | Required |
-| ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------- | :------: |
-| <a name="input_app_name"></a> [app_name](#input_app_name)                                                    | Name of the application (used for naming resources)     | `string`       | `"ping-app"`                                                                                                      |    no    |
-| <a name="input_app_port"></a> [app_port](#input_app_port)                                                    | Internal port for the application containers            | `number`       | `5000`                                                                                                            |    no    |
-| <a name="input_app_version"></a> [app_version](#input_app_version)                                           | Version tag for the application                         | `string`       | `"latest"`                                                                                                        |    no    |
-| <a name="input_container_memory"></a> [container_memory](#input_container_memory)                            | Memory limit for application containers (MB)            | `number`       | `256`                                                                                                             |    no    |
-| <a name="input_container_memory_swap"></a> [container_memory_swap](#input_container_memory_swap)             | Memory swap limit for application containers (MB)       | `number`       | `512`                                                                                                             |    no    |
-| <a name="input_docker_build_no_cache"></a> [docker_build_no_cache](#input_docker_build_no_cache)             | Force Docker build without cache                        | `bool`         | `false`                                                                                                           |    no    |
-| <a name="input_enable_detailed_logging"></a> [enable_detailed_logging](#input_enable_detailed_logging)       | Enable detailed application logging                     | `bool`         | `false`                                                                                                           |    no    |
-| <a name="input_enable_security_headers"></a> [enable_security_headers](#input_enable_security_headers)       | Enable security headers in Nginx                        | `bool`         | `true`                                                                                                            |    no    |
-| <a name="input_enable_tls"></a> [enable_tls](#input_enable_tls)                                              | Enable TLS/HTTPS for the load balancer                  | `bool`         | `true`                                                                                                            |    no    |
-| <a name="input_gunicorn_timeout"></a> [gunicorn_timeout](#input_gunicorn_timeout)                            | Gunicorn worker timeout in seconds                      | `number`       | `30`                                                                                                              |    no    |
-| <a name="input_gunicorn_workers"></a> [gunicorn_workers](#input_gunicorn_workers)                            | Number of Gunicorn worker processes per container       | `number`       | `2`                                                                                                               |    no    |
-| <a name="input_health_check_interval"></a> [health_check_interval](#input_health_check_interval)             | Health check interval in seconds                        | `number`       | `30`                                                                                                              |    no    |
-| <a name="input_health_check_retries"></a> [health_check_retries](#input_health_check_retries)                | Number of health check retries before marking unhealthy | `number`       | `3`                                                                                                               |    no    |
-| <a name="input_health_check_start_period"></a> [health_check_start_period](#input_health_check_start_period) | Health check start period in seconds                    | `number`       | `15`                                                                                                              |    no    |
-| <a name="input_health_check_timeout"></a> [health_check_timeout](#input_health_check_timeout)                | Health check timeout in seconds                         | `number`       | `10`                                                                                                              |    no    |
-| <a name="input_lb_port"></a> [lb_port](#input_lb_port)                                                       | External port for the load balancer                     | `number`       | `8080`                                                                                                            |    no    |
-| <a name="input_log_level"></a> [log_level](#input_log_level)                                                 | Application log level                                   | `string`       | `"INFO"`                                                                                                          |    no    |
-| <a name="input_network_subnet"></a> [network_subnet](#input_network_subnet)                                  | CIDR subnet for the application network                 | `string`       | `"172.20.0.0/16"`                                                                                                 |    no    |
-| <a name="input_nginx_worker_connections"></a> [nginx_worker_connections](#input_nginx_worker_connections)    | Number of worker connections for Nginx                  | `number`       | `1024`                                                                                                            |    no    |
-| <a name="input_node_count"></a> [node_count](#input_node_count)                                              | Number of application nodes to deploy                   | `number`       | `3`                                                                                                               |    no    |
-| <a name="input_rate_limit_burst"></a> [rate_limit_burst](#input_rate_limit_burst)                            | Rate limit burst size                                   | `number`       | `20`                                                                                                              |    no    |
-| <a name="input_rate_limit_requests"></a> [rate_limit_requests](#input_rate_limit_requests)                   | Rate limit requests per second per IP                   | `number`       | `10`                                                                                                              |    no    |
-| <a name="input_rebuild_trigger_files"></a> [rebuild_trigger_files](#input_rebuild_trigger_files)             | List of files that should trigger Docker image rebuilds | `list(string)` | <pre>[<br/> "Dockerfile",<br/> "app.py",<br/> "requirements.txt"<br/>]</pre>                                      |    no    |
-| <a name="input_ssl_protocols"></a> [ssl_protocols](#input_ssl_protocols)                                     | Allowed SSL/TLS protocols                               | `list(string)` | <pre>[<br/> "TLSv1.2",<br/> "TLSv1.3"<br/>]</pre>                                                                 |    no    |
-| <a name="input_tags"></a> [tags](#input_tags)                                                                | Tags to apply to all resources                          | `map(string)`  | <pre>{<br/> "ManagedBy": "terraform",<br/> "Owner": "devops-team",<br/> "Project": "ping-application"<br/>}</pre> |    no    |
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| <a name="input_app_name"></a> [app\_name](#input\_app\_name) | Name of the application (used for naming resources) | `string` | `"ping-app"` | no |
+| <a name="input_app_port"></a> [app\_port](#input\_app\_port) | Internal port for the application containers | `number` | `5000` | no |
+| <a name="input_app_version"></a> [app\_version](#input\_app\_version) | Version tag for the application | `string` | `"latest"` | no |
+| <a name="input_container_memory"></a> [container\_memory](#input\_container\_memory) | Memory limit for application containers (MB) | `number` | `256` | no |
+| <a name="input_container_memory_swap"></a> [container\_memory\_swap](#input\_container\_memory\_swap) | Memory swap limit for application containers (MB) | `number` | `512` | no |
+| <a name="input_docker_build_no_cache"></a> [docker\_build\_no\_cache](#input\_docker\_build\_no\_cache) | Force Docker build without cache | `bool` | `false` | no |
+| <a name="input_enable_detailed_logging"></a> [enable\_detailed\_logging](#input\_enable\_detailed\_logging) | Enable detailed application logging | `bool` | `false` | no |
+| <a name="input_enable_security_headers"></a> [enable\_security\_headers](#input\_enable\_security\_headers) | Enable security headers in Nginx | `bool` | `true` | no |
+| <a name="input_enable_tls"></a> [enable\_tls](#input\_enable\_tls) | Enable TLS/HTTPS for the load balancer | `bool` | `true` | no |
+| <a name="input_gunicorn_timeout"></a> [gunicorn\_timeout](#input\_gunicorn\_timeout) | Gunicorn worker timeout in seconds | `number` | `30` | no |
+| <a name="input_gunicorn_workers"></a> [gunicorn\_workers](#input\_gunicorn\_workers) | Number of Gunicorn worker processes per container | `number` | `2` | no |
+| <a name="input_health_check_interval"></a> [health\_check\_interval](#input\_health\_check\_interval) | Health check interval in seconds | `number` | `30` | no |
+| <a name="input_health_check_retries"></a> [health\_check\_retries](#input\_health\_check\_retries) | Number of health check retries before marking unhealthy | `number` | `3` | no |
+| <a name="input_health_check_start_period"></a> [health\_check\_start\_period](#input\_health\_check\_start\_period) | Health check start period in seconds | `number` | `15` | no |
+| <a name="input_health_check_timeout"></a> [health\_check\_timeout](#input\_health\_check\_timeout) | Health check timeout in seconds | `number` | `10` | no |
+| <a name="input_lb_port"></a> [lb\_port](#input\_lb\_port) | External port for the load balancer | `number` | `8080` | no |
+| <a name="input_log_level"></a> [log\_level](#input\_log\_level) | Application log level | `string` | `"INFO"` | no |
+| <a name="input_network_subnet"></a> [network\_subnet](#input\_network\_subnet) | CIDR subnet for the application network | `string` | `"172.20.0.0/16"` | no |
+| <a name="input_nginx_worker_connections"></a> [nginx\_worker\_connections](#input\_nginx\_worker\_connections) | Number of worker connections for Nginx | `number` | `1024` | no |
+| <a name="input_node_count"></a> [node\_count](#input\_node\_count) | Number of application nodes to deploy | `number` | `3` | no |
+| <a name="input_rate_limit_burst"></a> [rate\_limit\_burst](#input\_rate\_limit\_burst) | Rate limit burst size | `number` | `20` | no |
+| <a name="input_rate_limit_requests"></a> [rate\_limit\_requests](#input\_rate\_limit\_requests) | Rate limit requests per second per IP | `number` | `10` | no |
+| <a name="input_rebuild_trigger_files"></a> [rebuild\_trigger\_files](#input\_rebuild\_trigger\_files) | List of files that should trigger Docker image rebuilds | `list(string)` | <pre>[<br/>  "Dockerfile",<br/>  "app.py",<br/>  "requirements.txt"<br/>]</pre> | no |
+| <a name="input_ssl_protocols"></a> [ssl\_protocols](#input\_ssl\_protocols) | Allowed SSL/TLS protocols | `list(string)` | <pre>[<br/>  "TLSv1.2",<br/>  "TLSv1.3"<br/>]</pre> | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to all resources | `map(string)` | <pre>{<br/>  "ManagedBy": "terraform",<br/>  "Owner": "givanov-devops",<br/>  "Project": "ping-application"<br/>}</pre> | no |
 
 ## Outputs
 
-| Name                                                                                                        | Description                                     |
-| ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| <a name="output_app_nodes"></a> [app_nodes](#output_app_nodes)                                              | List of application node details                |
-| <a name="output_application_info"></a> [application_info](#output_application_info)                         | Application deployment information              |
-| <a name="output_build_information"></a> [build_information](#output_build_information)                      | Docker image build information                  |
-| <a name="output_container_configuration"></a> [container_configuration](#output_container_configuration)    | Container configuration summary                 |
-| <a name="output_deployment_summary"></a> [deployment_summary](#output_deployment_summary)                   | Complete deployment summary                     |
-| <a name="output_load_balancer_health_url"></a> [load_balancer_health_url](#output_load_balancer_health_url) | Load balancer health check URL                  |
-| <a name="output_load_balancer_url"></a> [load_balancer_url](#output_load_balancer_url)                      | URL of the load balancer                        |
-| <a name="output_monitoring_endpoints"></a> [monitoring_endpoints](#output_monitoring_endpoints)             | Available monitoring and health check endpoints |
-| <a name="output_network_info"></a> [network_info](#output_network_info)                                     | Network configuration details                   |
-| <a name="output_resource_tags"></a> [resource_tags](#output_resource_tags)                                  | Applied resource tags                           |
-| <a name="output_security_configuration"></a> [security_configuration](#output_security_configuration)       | Security settings summary                       |
-
+| Name | Description |
+|------|-------------|
+| <a name="output_app_nodes"></a> [app\_nodes](#output\_app\_nodes) | List of application node details |
+| <a name="output_application_info"></a> [application\_info](#output\_application\_info) | Application deployment information |
+| <a name="output_build_information"></a> [build\_information](#output\_build\_information) | Docker image build information |
+| <a name="output_container_configuration"></a> [container\_configuration](#output\_container\_configuration) | Container configuration summary |
+| <a name="output_deployment_summary"></a> [deployment\_summary](#output\_deployment\_summary) | Complete deployment summary |
+| <a name="output_load_balancer_health_url"></a> [load\_balancer\_health\_url](#output\_load\_balancer\_health\_url) | Load balancer health check URL |
+| <a name="output_load_balancer_url"></a> [load\_balancer\_url](#output\_load\_balancer\_url) | URL of the load balancer |
+| <a name="output_monitoring_endpoints"></a> [monitoring\_endpoints](#output\_monitoring\_endpoints) | Available monitoring and health check endpoints |
+| <a name="output_network_info"></a> [network\_info](#output\_network\_info) | Network configuration details |
+| <a name="output_resource_tags"></a> [resource\_tags](#output\_resource\_tags) | Applied resource tags |
+| <a name="output_security_configuration"></a> [security\_configuration](#output\_security\_configuration) | Security settings summary |
 <!-- END_TF_DOCS -->
